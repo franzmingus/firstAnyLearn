@@ -2,7 +2,8 @@ from django.contrib import admin
 from tinymce.widgets import TinyMCE
 from django.db import models
 
-from .models import BlogArticle, BlogArticleSeries, BlogArticleCategory
+from .models import BlogArticle, BlogArticleSeries, BlogArticleCategory, Profile
+from .forms import OwnUser
 # Register your models here.
 
 
@@ -23,3 +24,5 @@ class ArticleAdmin(admin.ModelAdmin):
 admin.site.register(BlogArticleCategory, admin.ModelAdmin)
 admin.site.register(BlogArticleSeries, admin.ModelAdmin)
 admin.site.register(BlogArticle, ArticleAdmin)
+admin.site.register(OwnUser, admin.ModelAdmin)
+admin.site.register(Profile, admin.ModelAdmin)

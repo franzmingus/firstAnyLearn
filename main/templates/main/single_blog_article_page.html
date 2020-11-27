@@ -22,7 +22,7 @@
                                 <div class="collapsible-header">{{article.article_title}}</div>
                                 <div class="collapsible-body">
                                     <p>
-                                        <a href="{{article.article_slug}}"><button class="btn waves-effect waves-light right-align" >Go</button></a>
+                                        <a href="{% url "main:single_slug" article.article_slug %}"><button class="btn waves-effect waves-light right-align" >Go</button></a>
                                     </p>
                                 </div>
                             </li>

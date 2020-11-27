@@ -1,12 +1,56 @@
-from django.shortcuts import render, redirect
+from django.shortcuts import render, redirect, get_object_or_404
 from django.http import HttpResponse
 
 from .models import BlogArticle, BlogArticleCategory, BlogArticleSeries
 from django.contrib.auth.forms import AuthenticationForm
 from django.contrib.auth import login, logout, authenticate
+from django.contrib.auth.decorators import login_required
+from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib import messages
-from .forms import OwnUserCreationForm
-# Create your views here.
+from .forms import OwnUserCreationForm, MyUserCreationForm, UserUpdateForm, ProfileUpdateForm
+
+from django.views.generic import ListView, DetailView, CreateView
+
+
+#Class based Views
+
+class HomeListView(ListView):
+    model = BlogArticleCategory
+    template_name = "main/home.html"
+    context_object_name = "blog_categories"
+    ordering = ["category_name"]
+
+
+class ArticleDetailView(DetailView):
+    model = BlogArticle
+    context_object_name = "single_blog_article"
+
+    def get_object(self):
+        return get_object_or_404(BlogArticle, article_slug=self.kwargs['article_slug'])
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+
+        blog_article = self.get_object()
+        print(blog_article.article_title)
+        articles_from_series = BlogArticle.objects.filter(article_series__series_name=blog_article.article_series.series_name)\
+                                .order_by("article_publish_time")
+
+        blog_article_idx = list(articles_from_series).index(blog_article)
+
+        context["sidebar"] = articles_from_series
+        context["side_bar_pop_out_index"] = blog_article_idx
+
+        return context
+
+
+class ArticleCreateView(LoginRequiredMixin, CreateView):
+    login_url = '/login/'
+    model = BlogArticle
+    fields = ["article_title", "article_content", "article_series", "article_slug"]
+
+
+
 
 
 def homepage(request):
@@ -24,6 +68,7 @@ def single_slug(request, single_slug):
         this_category = BlogArticleCategory.objects.get(category_slug=single_slug)
         series_from_category = BlogArticleSeries.objects.filter(series_category__category_name=this_category.category_name)
 
+        print("Returning Category Page")
         return render(request,
                       "main/category_page.html",
                       context={"blog_category": this_category,
@@ -36,6 +81,7 @@ def single_slug(request, single_slug):
         this_series = BlogArticleSeries.objects.get(series_name=single_slug)
         articles_from_series = BlogArticle.objects.filter(article_series__series_name=this_series.series_name)
 
+        print("Returning Series Page")
         return render(request,
                       "main/series_page.html",
                       context={"blog_series": blog_series,
@@ -51,6 +97,7 @@ def single_slug(request, single_slug):
 
         blog_article_idx = list(articles_from_series).index(blog_article)
 
+        print("Returning Blog Page")
         return render(request,
                       "main/single_blog_article_page.html",
                       context={"single_blog_article": blog_article,
@@ -59,11 +106,12 @@ def single_slug(request, single_slug):
 
     return HttpResponse("Nothing found for : " + single_slug)
 
+
 def register(request):
 
     if request.method == "POST":
 
-        form = OwnUserCreationForm(request.POST)
+        form = MyUserCreationForm(request.POST)
 
         if form.is_valid():
             user = form.save()
@@ -80,11 +128,11 @@ def register(request):
             for msg in form.error_messages:
                 messages.error(request, f"{msg} : {form.error_messages[msg]}" )
 
-    form = OwnUserCreationForm
+    form = MyUserCreationForm
 
     return render(request,
                   "main/register.html",
-                  context={"form":form})
+                  context={"form": form})
 
 
 def logout_request(request):
@@ -129,5 +177,33 @@ def login_request(request):
 
     return render(request,
                   "main/login.html",
-                  {"form":form})
+                  {"form": form})
+
+@login_required
+def profile(request):
+    if request.method == "POST":
+        user_update_form = UserUpdateForm(request.POST, instance=request.user)
+        profile_update_form = ProfileUpdateForm(request.POST, request.FILES, instance=request.user.profile)
+
+        if user_update_form.is_valid() and profile_update_form.is_valid():
+            user_update_form.save()
+            profile_update_form.save()
+
+            messages.success(request, "Updated")
+            return redirect("main:profile")
+
+
+
+    elif request.method == "GET":
+        user_update_form = UserUpdateForm(instance=request.user)
+        profile_update_form = ProfileUpdateForm(instance=request.user.profile)
+
+        context = {
+            "user_update_form": user_update_form,
+            "profile_update_form": profile_update_form
+        }
+
+        return render(request,
+                      "main/profile.html",
+                      context=context)
 

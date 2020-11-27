@@ -2,9 +2,11 @@
     {% load static %}
     <!-- Compiled and minified CSS -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/css/materialize.min.css">
+    <link rel="stylesheet" type="text/css" href="{% static 'main/style.css' %}">
 
     <!-- Compiled and minified JavaScript -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/js/materialize.min.js"></script>
+    <script src=""></script>
 
 </head>
 
@@ -14,12 +16,17 @@
 
     {% include "main/includes/messages.html" %}
 
-    <div class="container">
+    <div class="main">
 
-    {% block content %}
-    {% endblock %}
+        <div class="container">
+
+            {% block content %}
+            {% endblock %}
+
+        </div>
 
     </div>
+
 
 
 </body>
